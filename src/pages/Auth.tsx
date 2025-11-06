@@ -1,23 +1,87 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AnimatedCircles from "@/components/AnimatedCircles";
 import Footer from "@/components/Footer";
 import { Lightbulb, Upload } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const Auth = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Placeholder - no backend logic yet
-    console.log(isLogin ? "Login" : "Sign up", { email, password, firstName, lastName });
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        // Login
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          toast({
+            title: "Login Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data.user) {
+          toast({
+            title: "Welcome back!",
+            description: "Successfully logged in.",
+          });
+          navigate("/app");
+        }
+      } else {
+        // Sign up
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/app`,
+          },
+        });
+
+        if (error) {
+          toast({
+            title: "Sign Up Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data.user) {
+          toast({
+            title: "Account created!",
+            description: "Please check your email to verify your account.",
+          });
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,8 +231,9 @@ const Auth = () => {
                 type="submit"
                 variant="hero"
                 className="w-full mt-6 h-12 text-base font-semibold hover:scale-105 transition-transform"
+                disabled={isLoading}
               >
-                {isLogin ? "Login" : "Create Account"}
+                {isLoading ? "Please wait..." : (isLogin ? "Login" : "Create Account")}
               </Button>
             </form>
 
