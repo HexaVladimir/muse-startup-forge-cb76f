@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import AnimatedCircles from "./AnimatedCircles";
 
 const HeroSection = () => {
@@ -23,9 +24,12 @@ const HeroSection = () => {
               variant="hero" 
               size="lg"
               className="text-lg px-8 py-6 h-auto"
+              asChild
             >
-              Get Started
-              <ArrowRight className="ml-2" />
+              <Link to="/auth">
+                Get Started
+                <ArrowRight className="ml-2" />
+              </Link>
             </Button>
             
             <Button 
