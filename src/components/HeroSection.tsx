@@ -2,9 +2,36 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AnimatedCircles from "./AnimatedCircles";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const HeroSection = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
+  
+  const handleDemoLogin = async () => {
+    setIsDemoLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: "busybyteshop@gmail.com",
+        password: "demo123456"
+      });
+      
+      if (error) throw error;
+      
+      navigate("/app");
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsDemoLoading(false);
+    }
+  };
   
   return (
     <section className="relative min-h-screen gradient-bg flex items-center justify-center overflow-hidden">
@@ -36,8 +63,10 @@ const HeroSection = () => {
               variant="outline" 
               size="lg"
               className="text-lg px-8 py-6 h-auto bg-transparent border-foreground/20 text-foreground hover:bg-foreground/10"
+              onClick={handleDemoLogin}
+              disabled={isDemoLoading}
             >
-              Try Demo User
+              {isDemoLoading ? "Logging in..." : "Try Demo User"}
             </Button>
           </div>
         </div>
