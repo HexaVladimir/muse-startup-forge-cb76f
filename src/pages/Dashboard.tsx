@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,13 +6,37 @@ import { Textarea } from "@/components/ui/textarea";
 import { Lightbulb, Sparkles, Save, LogOut, Heart } from "lucide-react";
 import AnimatedCircles from "@/components/AnimatedCircles";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from '@supabase/supabase-js';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
   const [startupName, setStartupName] = useState("");
   const [areaOfInterest, setAreaOfInterest] = useState("");
   const [generatedIdea, setGeneratedIdea] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/auth");
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    // Listen to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate("/auth");
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleGenerate = () => {
     setIsGenerating(true);
