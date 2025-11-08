@@ -16,7 +16,7 @@ const HeroSection = () => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: "busybyteshop@gmail.com",
-        password: "demo123456"
+        password: "demo123"
       });
       
       if (error) throw error;
