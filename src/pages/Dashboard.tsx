@@ -8,9 +8,11 @@ import { Lightbulb, Sparkles, Save, LogOut, Heart } from "lucide-react";
 import AnimatedCircles from "@/components/AnimatedCircles";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from '@supabase/supabase-js';
+import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [startupName, setStartupName] = useState("");
   const [areaOfInterest, setAreaOfInterest] = useState("");
@@ -39,18 +41,35 @@ const Dashboard = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
-    // Placeholder: Simulate AI generation
-    setTimeout(() => {
-      setGeneratedIdea({
-        name: startupName || "EcoConnect",
-        description: "A platform connecting eco-conscious consumers with sustainable local businesses, featuring carbon footprint tracking and green rewards programs.",
-        targetAudience: "Environmentally conscious millennials and Gen Z consumers aged 25-40 who prioritize sustainability in their purchasing decisions.",
-        monetization: "Commission-based model (15% from businesses) + Premium subscription tier ($9.99/month) offering exclusive deals and advanced analytics."
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-startup-idea', {
+        body: { 
+          areaOfInterest,
+          startupName: startupName || undefined
+        }
       });
+
+      if (error) throw error;
+
+      if (data?.idea) {
+        setGeneratedIdea(data.idea);
+        toast({
+          title: "Idea Generated!",
+          description: "Your startup idea has been created successfully.",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating idea:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate idea. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsGenerating(false);
-    }, 1500);
+    }
   };
 
   const handleSave = () => {
