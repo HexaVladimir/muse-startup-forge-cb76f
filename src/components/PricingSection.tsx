@@ -1,7 +1,32 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useState } from "react";
 
 const PricingSection = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleProTrial = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: { priceId: 'price_1RTkNaHcwwXEs0fuJUHz6uUV' }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast.error('Failed to start checkout. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const plans = [
     {
       name: "Free",
@@ -77,8 +102,10 @@ const PricingSection = () => {
                 variant={plan.popular ? "hero" : "outline"}
                 className="w-full"
                 size="lg"
+                onClick={plan.popular ? handleProTrial : undefined}
+                disabled={isLoading && plan.popular}
               >
-                {plan.cta}
+                {isLoading && plan.popular ? "Loading..." : plan.cta}
               </Button>
             </div>
           ))}
